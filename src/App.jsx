@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -38,26 +38,6 @@ function Nav({ onLogout }) {
   )
 }
 
-function BlockedPage() {
-  return (
-    <div className="blocked-wrapper">
-      <div className="blocked-card">
-        <div className="blocked-icon">🚫</div>
-        <div className="blocked-title">Acceso restringido</div>
-        <p className="blocked-desc">
-          Esta dirección IP ya ha sido utilizada para crear una cuenta.
-          Solo permitimos una cuenta por IP para garantizar acceso justo
-          a boletas en alta demanda. Si crees que esto es un error,
-          contacta a nuestro soporte.
-        </p>
-        <a href="mailto:soporte@boletica.com" className="btn btn-secondary">
-          Contactar soporte
-        </a>
-      </div>
-    </div>
-  )
-}
-
 function AppRoutes({ onLogout }) {
   return (
     <>
@@ -76,44 +56,12 @@ function AppRoutes({ onLogout }) {
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false)
-  const [blocked, setBlocked] = useState(false)
-  const [userIP, setUserIP] = useState('')
-
-  useEffect(() => {
-    fetch('https://api.ipify.org?format=json')
-      .then(r => r.json())
-      .then(data => {
-        setUserIP(data.ip)
-        const list = JSON.parse(localStorage.getItem('blockedIPs') || '[]')
-        if (list.includes(data.ip)) setBlocked(true)
-      })
-      .catch(() => setUserIP('desconocida'))
-  }, [])
-
-  function handleLogin() {
-    if (userIP && userIP !== 'desconocida') {
-      const list = JSON.parse(localStorage.getItem('blockedIPs') || '[]')
-      if (!list.includes(userIP)) {
-        list.push(userIP)
-        localStorage.setItem('blockedIPs', JSON.stringify(list))
-      }
-    }
-    setLoggedIn(true)
-  }
-
-  if (blocked) {
-    return (
-      <BrowserRouter>
-        <div className="app"><BlockedPage /></div>
-      </BrowserRouter>
-    )
-  }
 
   if (!loggedIn) {
     return (
       <BrowserRouter>
         <div className="app">
-          <Login onLogin={handleLogin} userIP={userIP} />
+          <Login onLogin={() => setLoggedIn(true)} />
         </div>
       </BrowserRouter>
     )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Login({ onLogin, userIP }) {
+export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -46,16 +46,6 @@ export default function Login({ onLogin, userIP }) {
                 />
               </div>
             </div>
-
-            {userIP && (
-              <div className="ip-notice">
-                <span>🔒</span>
-                <span>
-                  Sesión vinculada a tu IP ({userIP}). Una sola cuenta por IP
-                  para garantizar acceso justo a boletas en alta demanda.
-                </span>
-              </div>
-            )}
 
             <button
               className="btn btn-primary btn-full btn-lg"
