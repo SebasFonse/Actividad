@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketMaster Clone - Anti-Revendedores</title>
+    <style>
+        /* CSS - ESTILOS GENERALES */
+        :root {
+            --primary: #0052ff;
+            --danger: #ff3e3e;
+            --dark: #1a1a1a;
+            --light: #f4f4f9;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+        body { background-color: var(--light); color: var(--dark); }
+
+        /* Pantalla de Bloqueo por IP */
+        #ip-blocker {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark); color: white;
+            z-index: 9999; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+
+        /* Navegación */
+        nav {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo { font-weight: bold; font-size: 1.5rem; color: var(--primary); cursor: pointer; }
+        .nav-links button {
+            background: none; border: none; margin-left: 1.5rem;
+            cursor: pointer; font-weight: 600; color: var(--dark);
+        }
+
+        /* Contenedores de Módulos */
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        .section { display: none; }
+        .active { display: block; }
+
+        /* Dashboard de Conciertos */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .card { background: var(--white); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 150px; object-fit: cover; }
+        .card-content { padding: 1rem; }
+        .card-content h3 { margin-bottom: 0.5rem; }
+        .card-content p { font-size: 0.9rem; color: #666; margin-bottom: 1rem; }
+        .btn-buy { 
+            background: var(--primary); color: white; border: none; 
+            width: 100%; padding: 0.7rem; border-radius: 5px; cursor: pointer; 
+        }
+
+        /* Pasarela de Pago */
+        .payment-box { background: white; padding: 2rem; border-radius: 10px; max-width: 500px; margin: auto; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.3rem; font-size: 0.8rem; font-weight: bold; }
+        .form-group input { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; }
+
+        /* Perfil de Usuario */
+        .profile-layout { display: flex; gap: 2rem; }
+        .profile-menu { width: 200px; }
+        .profile-menu button { 
+            display: block; width: 100%; text-align: left; padding: 0.8rem; 
+            border: none; background: none; border-bottom: 1px solid #ddd; cursor: pointer;
+        }
+        .profile-content { flex: 1; background: white; padding: 1.5rem; border-radius: 10px; }
+        .ticket-item { border-left: 4px solid var(--primary); background: #f9f9f9; padding: 1rem; margin-bottom: 1rem; }
+
+    </style>
+</head>
+<body>
+
+    <!-- BLOQUEO POR IP (SIMULADO) -->
+    <div id="ip-blocker">
+        <h1 style="font-size: 4rem;">🚫</h1>
+        <h2>ACCESO RESTRINGIDO</h2>
+        <p>Esta dirección IP ya ha sido utilizada para una sesión de compra.</p>
+        <p>Para evitar la reventa, solo se permite un acceso por conexión.</p>
+        <button onclick="clearIP()" style="margin-top: 2rem; padding: 10px; cursor: pointer;">(Debug: Limpiar IP para pruebas)</button>
+    </div>
+
+    <!-- NAVEGACIÓN -->
+    <nav>
+        <div class="logo" onclick="showSection('dashboard')">TICKET-PRO</div>
+        <div class="nav-links">
+            <button onclick="showSection('dashboard')">Conciertos</button>
+            <button onclick="showSection('profile')">Mi Perfil</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- MÓDULO 1: DASHBOARD -->
+        <section id="dashboard" class="section active">
+            <h2 style="margin-bottom: 1.5rem;">Conciertos Disponibles</h2>
+            <div id="concert-list" class="grid">
+                <!-- Se llena con JS -->
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: PASARELA DE PAGOS -->
+        <section id="checkout" class="section">
+            <div class="payment-box">
+                <h2 style="margin-bottom: 1rem;">Finalizar Compra</h2>
+                <div id="selected-event-info" style="margin-bottom: 1.5rem; color: var(--primary); font-weight: bold;"></div>
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label>Nombre en la tarjeta</label>
+                        <input type="text" placeholder="Juan Perez" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Tarjeta</label>
+                        <input type="text" placeholder="**** **** **** ****" required>
+                    </div>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Expira</label>
+                            <input type="text" placeholder="MM/AA" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CVC</label>
+                            <input type="text" placeholder="123" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-buy" style="background: #27ae60;">PAGAR AHORA</button>
+                    <button type="button" onclick="showSection('dashboard')" style="background: none; border: none; width: 100%; margin-top: 10px; color: #666; cursor: pointer;">Cancelar</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- MÓDULO 3: PERFIL DE USUARIO -->
+        <section id="profile" class="section">
+            <div class="profile-layout">
+                <div class="profile-menu">
+                    <button onclick="showProfileTab('tickets')">🎟 Mis Boletas</button>
+                    <button onclick="showProfileTab('history')">📜 Historial</button>
+                    <button onclick="showProfileTab('info')">👤 Mis Datos</button>
+                </div>
+                <div class="profile-content">
+                    <!-- Tab Mis Boletas -->
+                    <div id="tab-tickets" class="profile-tab">
+                        <h3>Mis Boletas Activas</h3>
+                        <div id="my-tickets-list" style="margin-top: 1rem;">
+                            <!-- Dinámico -->
+                        </div>
+                    </div>
+                    <!-- Tab Historial -->
+                    <div id="tab-history" class="profile-tab" style="display:none">
+                        <h3>Historial de Compras</h3>
+                        <p style="color: #888; margin-top: 1rem;">No tienes compras anteriores.</p>
+                    </div>
+                    <!-- Tab Info -->
+                    <div id="tab-info" class="profile-tab" style="display:none">
+                        <h3>Información Personal</h3>
+                        <div style="margin-top: 1rem;">
+                            <p><strong>Nombre:</strong> Juan Invitado</p>
+                            <p><strong>Email:</strong> usuario@ejemplo.com</p>
+                            <p><strong>IP Registrada:</strong> 192.168.1.1 (Protegida)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        /* JAVASCRIPT - LÓGICA DE LA APP */
+
+        // 1. Datos de Conciertos
+        const conciertos = [
+            { id: 1, artista: "Feid - Ferxxo Nitro Jam", fecha: "15 Oct 2024", lugar: "Medellín", precio: "$350.000", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400" },
+            { id: 2, artista: "Metallica M72 Tour", fecha: "05 Nov 2024", lugar: "Bogotá", precio: "$580.000", img: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400" },
+            { id: 3, artista: "Karol G - Mañana será Bonito", fecha: "10 Dic 2024", lugar: "Cali", precio: "$420.000", img: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400" }
+        ];
+
+        let misCompras = [];
+
+        // 2. Control de Bloqueo por IP
+        function checkIP() {
+            const isBlocked = localStorage.getItem('ip_blocked');
+            if (isBlocked === 'true') {
+                document.getElementById('ip-blocker').style.display = 'flex';
+            }
+        }
+
+        function clearIP() {
+            localStorage.removeItem('ip_blocked');
+            location.reload();
+        }
+
+        // 3. Navegación entre Secciones
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // 4. Renderizar Dashboard
+        function renderConcerts() {
+            const list = document.getElementById('concert-list');
+            list.innerHTML = conciertos.map(c => `
+                <div class="card">
+                    <img src="${c.img}" alt="${c.artista}">
+                    <div class="card-content">
+                        <h3>${c.artista}</h3>
+                        <p>📍 ${c.lugar} <br> 📅 ${c.fecha}</p>
+                        <p><strong>${c.precio}</strong></p>
+                        <button class="btn-buy" onclick="goToCheckout('${c.artista}', '${c.precio}')">Comprar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 5. Proceso de Pago
+        function goToCheckout(artista, precio) {
+            document.getElementById('selected-event-info').innerText = `${artista} - Total: ${precio}`;
+            showSection('checkout');
+        }
+
+        document.getElementById('payment-form').onsubmit = function(e) {
+            e.preventDefault();
+            alert("¡Pago Exitoso! Tu entrada ha sido generada.");
+            
+            // Lógica de Bloqueo: Una vez compra, su IP queda marcada para que no entre más a comprar/revender
+            localStorage.setItem('ip_blocked', 'true');
+            
+            // Guardar en mis compras (simulado)
+            misCompras.push(document.getElementById('selected-event-info').innerText);
+            updateTickets();
+            
+            // Mostrar bloqueo inmediatamente después de la compra
+            setTimeout(() => {
+                checkIP();
+            }, 1000);
+        };
+
+        // 6. Perfil y Tabs
+        function showProfileTab(tabId) {
+            document.querySelectorAll('.profile-tab').forEach(t => t.style.display = 'none');
+            document.getElementById('tab-' + tabId).style.display = 'block';
+        }
+
+        function updateTickets() {
+            const container = document.getElementById('my-tickets-list');
+            if(misCompras.length === 0) {
+                container.innerHTML = "<p>No tienes boletas.</p>";
+                return;
+            }
+            container.innerHTML = misCompras.map(t => `
+                <div class="ticket-item">
+                    <strong>${t}</strong><br>
+                    <small>ID: TCK-${Math.floor(Math.random()*10000)} | Estado: Confirmado</small>
+                </div>
+            `).join('');
+        }
+
+        // Inicialización
+        window.onload = () => {
+            checkIP();
+            renderConcerts();
+            updateTickets();
+        };
+
+    </script>
+</body>
+</html>
