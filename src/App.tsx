@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useLocation,
+} from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Payment from './components/Payment';
 import UserMenu from './components/UserMenu';
@@ -14,8 +21,9 @@ function BlockedPage() {
         <div className="blocked-title">Acceso restringido</div>
         <p className="blocked-desc">
           Esta dirección IP ya ha sido utilizada para crear una cuenta.<br /><br />
-          Para garantizar acceso justo a boletas en alta demanda, solo permitimos una cuenta por dirección IP.
-          Si crees que esto es un error, contacta a nuestro soporte.
+          Para garantizar acceso justo a boletas en alta demanda, solo permitimos
+          una cuenta por dirección IP. Si crees que esto es un error, contacta a
+          nuestro soporte.
         </p>
         <div style={{ marginTop: '2rem' }}>
           <a href="mailto:soporte@boletica.com" className="btn btn-secondary">
@@ -28,6 +36,7 @@ function BlockedPage() {
 }
 
 function Nav({ onLogout }: { onLogout: () => void }) {
+  // useLocation debe usarse DENTRO del Router — aquí es correcto
   const location = useLocation();
   return (
     <nav className="nav">
@@ -37,10 +46,16 @@ function Nav({ onLogout }: { onLogout: () => void }) {
           Boletica
         </Link>
         <div className="nav-actions">
-          <Link to="/" className={`nav-pill ${location.pathname === '/' ? 'active' : ''}`}>
+          <Link
+            to="/"
+            className={`nav-pill${location.pathname === '/' ? ' active' : ''}`}
+          >
             Eventos
           </Link>
-          <Link to="/user" className={`nav-pill ${location.pathname === '/user' ? 'active' : ''}`}>
+          <Link
+            to="/user"
+            className={`nav-pill${location.pathname === '/user' ? ' active' : ''}`}
+          >
             Mi cuenta
           </Link>
           <button className="btn btn-ghost btn-sm" onClick={onLogout}>
@@ -52,6 +67,23 @@ function Nav({ onLogout }: { onLogout: () => void }) {
   );
 }
 
+// Layout autenticado: Nav + contenido. Vive dentro del Router.
+function AuthenticatedLayout({ onLogout }: { onLogout: () => void }) {
+  return (
+    <>
+      <Nav onLogout={onLogout} />
+      <main className="main">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/user" element={<UserMenu />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </>
+  );
+}
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -59,23 +91,26 @@ function App() {
 
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data: { ip: string }) => {
         setUserIP(data.ip);
-        const blockedIPs: string[] = JSON.parse(localStorage.getItem('blockedIPs') || '[]');
+        const blockedIPs: string[] = JSON.parse(
+          localStorage.getItem('blockedIPs') || '[]'
+        );
         if (blockedIPs.includes(data.ip)) {
           setIsBlocked(true);
         }
       })
       .catch(() => {
-        // fallback: allow login without IP
         setUserIP('desconocida');
       });
   }, []);
 
   const handleLogin = () => {
     if (userIP && userIP !== 'desconocida') {
-      const blockedIPs: string[] = JSON.parse(localStorage.getItem('blockedIPs') || '[]');
+      const blockedIPs: string[] = JSON.parse(
+        localStorage.getItem('blockedIPs') || '[]'
+      );
       if (!blockedIPs.includes(userIP)) {
         blockedIPs.push(userIP);
         localStorage.setItem('blockedIPs', JSON.stringify(blockedIPs));
@@ -109,21 +144,7 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <Routes>
-          <Route path="*" element={
-            <>
-              <Nav onLogout={handleLogout} />
-              <main className="main">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/user" element={<UserMenu />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </main>
-            </>
-          } />
-        </Routes>
+        <AuthenticatedLayout onLogout={handleLogout} />
       </div>
     </Router>
   );
